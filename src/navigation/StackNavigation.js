@@ -6,7 +6,12 @@ const Stack = createStackNavigator();
 
 function StackNavigation() {
   return (
-    <Stack.Navigator screenOptions={{headerShown:false}}>
+    <Stack.Navigator  screenOptions={{
+      headerShown: false,
+      presentation: 'modal',
+      animationTypeForReplace: 'push',
+      animation: 'slide_from_right',
+    }}>
       <Stack.Screen name="HomeScreen" component={HomeScreen} />
       <Stack.Screen name="ChatScreen" component={ChatScreen} />
     </Stack.Navigator>

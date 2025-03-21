@@ -5,6 +5,7 @@ import {
   Text,
   TouchableOpacity,
   View,
+  TextInput,
 } from 'react-native';
 import AntDesign from 'react-native-vector-icons/AntDesign';
 import Entypo from 'react-native-vector-icons/Entypo';
@@ -20,23 +21,15 @@ import {
 
 const ChatScreen = () => {
   const navigation = useNavigation();
-  const [messages, setMessages] = useState([
-    // {
-    //   _id: 1,
-    //   text: 'Hello developer',
-    //   createdAt: new Date(),
-    //   user: {
-    //     _id: 2,
-    //     name: 'React Native',
-    //     avatar: 'https://placeimg.com/140/140/any',
-    //   },
-    // },
-  ]);
+  const [inputText, setInputText] = useState('');
+
+  const [messages, setMessages] = useState([]);
 
   const onSend = useCallback((newMessages = []) => {
     setMessages(previousMessages =>
       GiftedChat.append(previousMessages, newMessages),
     );
+    setInputText('');
   }, []);
 
   const handleAttachment = async () => {
@@ -49,22 +42,29 @@ const ChatScreen = () => {
         ],
       });
 
+      console.log('Selected File:', res);
+
       let newMessage = {
         _id: Math.random().toString(),
         createdAt: new Date(),
         user: {_id: 1, name: 'You'},
       };
 
-      if (res.type.includes('image')) {
-        newMessage.image = res.uri;
+      const fileUri = res.uri || res.fileCopyUri;
+
+      if (res.type.startsWith('image/')) {
+        newMessage.image = fileUri;
       } else {
-        newMessage.text = `📄 ${res.name}`;
-        newMessage.file = res.uri;
+        newMessage.text = res.name || 'File';
+        newMessage.file = fileUri;
       }
 
       onSend([newMessage]);
     } catch (error) {
-      console.log('Attachment Error:', error);
+      if (DocumentPicker.isCancel(error)) {
+      } else {
+        console.error('Attachment Error:', error);
+      }
     }
   };
 
@@ -89,7 +89,9 @@ const ChatScreen = () => {
           <Actions
             {...props}
             onPressActionButton={handleAttachment}
-            icon={() => <Ionicons name="attach" size={24} color="black" />}
+            icon={() => (
+              <AntDesign name="pluscircleo" size={24} color="black" />
+            )}
           />
         )}
         renderBubble={props => (
@@ -101,15 +103,38 @@ const ChatScreen = () => {
             }}
           />
         )}
+        keyboardShouldPersistTaps="handled"
         renderInputToolbar={props => (
-          <InputToolbar
-            {...props}
-            containerStyle={{
-              backgroundColor: '#fff',
-              borderTopWidth: 1,
-              borderColor: '#ddd',
-            }}
-          />
+          <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 10,marginVertical:10 }}>
+          <View style={[styles.inputContainer, { flex: 1 }]}>
+            <TextInput
+              style={styles.input}
+              placeholder="Message"
+              value={inputText}
+              onChangeText={setInputText}
+            />
+            <TouchableOpacity
+              onPress={() =>
+                onSend([
+                  {
+                    _id: Math.random().toString(),
+                    text: inputText,
+                    createdAt: new Date(),
+                    user: { _id: 1, name: 'You' },
+                  },
+                ])
+              }
+              style={styles.iconButton}
+            >
+              <AntDesign name="arrowup" size={22} color="#0078ff" />
+            </TouchableOpacity>
+          </View>
+          
+          <TouchableOpacity onPress={handleAttachment} style={styles.iconButton}>
+            <AntDesign name="plus" size={30} color="#000000" />
+          </TouchableOpacity>
+        </View>
+        
         )}
       />
     </SafeAreaView>
@@ -134,5 +159,26 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     textAlign: 'center',
     paddingBottom: 10,
+  },
+  inputContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderColor:'#F5F5F5',
+    borderWidth:1,
+    borderRadius: 25,
+    marginHorizontal: 10,
+    paddingHorizontal: 10,
+    marginBottom: 10,
+    justifyContent:'space-between'
+  },
+  input: {
+    padding: 10,
+    fontSize: 16,
+    color: '#333',
+  },
+  iconButton: {
+    padding: 10,
+    backgroundColor:'#F5F5F5',
+    borderRadius:50
   },
 });
